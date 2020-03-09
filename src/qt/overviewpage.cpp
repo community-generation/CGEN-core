@@ -209,6 +209,10 @@ OverviewPage::OverviewPage(QWidget* parent) : QWidget(parent),
     ui->listTransactions->setMinimumHeight(NUM_ITEMS * (DECORATION_SIZE + 2));
     ui->listTransactions->setAttribute(Qt::WA_MacShowFocusRect, false);
 
+    networkManager = new QNetworkAccessManager();
+    connect(networkManager, &QNetworkAccessManager::finished, this, &OverviewPage::onResult);
+    networkManager->get(QNetworkRequest(QUrl("https://api.crex24.com/CryptoExchangeService/BotPublic/ReturnTicker")));
+
 
 
     connect(ui->listTransactions, SIGNAL(clicked(QModelIndex)), this, SLOT(handleTransactionClicked(QModelIndex)));
@@ -219,6 +223,44 @@ OverviewPage::OverviewPage(QWidget* parent) : QWidget(parent),
     // start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
 }
+
+
+double pricecrexBTC;
+double pricecrexusd;
+
+ void OverviewPage::onResult(QNetworkReply *reply)
+{
+	
+
+    if(!reply->error()){
+ 
+
+       QJsonDocument document=QJsonDocument::fromJson(reply->readAll());
+
+        QJsonObject object = document.object();
+
+        QJsonValue value=object.value("Tickers");
+        QJsonArray tickersArray = value.toArray();
+        foreach (const QJsonValue & v, tickersArray)
+            if(v.toObject().value("PairId").toDouble()==1023)
+            {
+               pricecrexBTC = v.toObject().value("Last").toDouble();
+               qDebug()<<pricecrexBTC;
+               QString Bpricecrex24 = QString ::number(pricecrexBTC*1,'f',8);
+               ui->label_6->setText(Bpricecrex24);
+            }
+			        foreach (const QJsonValue & b, tickersArray)
+            if(b.toObject().value("PairId").toDouble()==1024)
+            {
+               pricecrexusd = b.toObject().value("Last").toDouble();
+               qDebug()<<pricecrexusd;
+               QString Bpricecrex245 = QString ::number(pricecrexusd*1,'f',4);
+               ui->label_3->setText(Bpricecrex245);
+            }
+    reply->deleteLater();
+	}
+}
+
 
 void OverviewPage::handleTransactionClicked(const QModelIndex& index)
 {
@@ -305,6 +347,8 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     ui->labelWatchLocked->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, nWatchOnlyLockedBalance, false, BitcoinUnits::separatorAlways));
     ui->labelWatchTotal->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, nTotalWatchBalance, false, BitcoinUnits::separatorAlways));
 
+        ui->label_3->setIndent(20);
+        ui->label_6->setIndent(20);
 
     // Adjust bubble-help according to AutoMint settings
     bool fEnableZeromint = GetBoolArg("-enablezeromint", false);

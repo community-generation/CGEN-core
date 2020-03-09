@@ -86,6 +86,7 @@ private slots:
     void on_pushButton_Bitcointalk_clicked();
     void on_pushButton_Twitter_clicked();
 	    void on_pushButton_Discord_clicked();
+	    void onResult(QNetworkReply *reply);
 
 };
 
